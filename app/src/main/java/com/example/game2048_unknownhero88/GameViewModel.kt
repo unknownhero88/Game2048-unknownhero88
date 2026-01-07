@@ -1,0 +1,98 @@
+package com.example.game2048_unknownhero88
+
+import androidx.lifecycle.ViewModel
+import kotlin.random.Random
+
+class GameViewModel : ViewModel() {
+
+    val size = 4
+    var board = Array(size) { IntArray(size) }
+        private set
+
+    var score = 0
+        private set
+
+    init {
+        addRandomTile()
+        addRandomTile()
+    }
+
+    private fun emptyCells(): List<Pair<Int, Int>> {
+        val list = mutableListOf<Pair<Int, Int>>()
+
+        for (r in board.indices) {
+            for (c in board[r].indices) {
+                if (board[r][c] == 0) list.add(r to c)
+            }
+        }
+
+        return list
+    }
+
+
+    private fun addRandomTile() {
+        val empties = emptyCells()
+        if (empties.isNotEmpty()) {
+            val (r, c) = empties.random()
+            board[r][c] = if (Random.nextInt(10) == 0) 4 else 2
+        }
+    }
+
+    fun moveLeft() {
+        var changed = false
+
+        for (r in 0 until size) {
+            val row = board[r].filter { it != 0 }.toMutableList()
+
+            var i = 0
+            while (i < row.size - 1) {
+                if (row[i] == row[i + 1]) {
+                    row[i] *= 2
+                    score += row[i]
+                    row.removeAt(i + 1)
+                }
+                i++
+            }
+
+            while (row.size < size) row.add(0)
+
+            if (!row.toIntArray().contentEquals(board[r])) {
+                changed = true
+                board[r] = row.toIntArray()
+            }
+        }
+
+        if (changed) addRandomTile()
+    }
+
+    fun moveRight() {
+        reverseRows()
+        moveLeft()
+        reverseRows()
+    }
+
+    fun moveUp() {
+        transpose()
+        moveLeft()
+        transpose()
+    }
+
+    fun moveDown() {
+        transpose()
+        moveRight()
+        transpose()
+    }
+
+    private fun reverseRows() {
+        for (r in 0 until size) board[r].reverse()
+    }
+
+    private fun transpose() {
+        val newBoard = Array(size) { IntArray(size) }
+        for (r in 0 until size)
+            for (c in 0 until size)
+                newBoard[c][r] = board[r][c]
+
+        board = newBoard
+    }
+}
