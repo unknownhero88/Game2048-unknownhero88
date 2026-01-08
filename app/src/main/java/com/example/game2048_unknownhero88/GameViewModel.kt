@@ -12,6 +12,10 @@ class GameViewModel : ViewModel() {
     var board = Array(size) { IntArray(size) }
         private set
 
+    var newTilePosition by mutableStateOf<Pair<Int, Int>?>(null)
+        private set
+
+
     var score = 0
         private set
 
@@ -38,6 +42,7 @@ class GameViewModel : ViewModel() {
         if (empties.isNotEmpty()) {
             val (r, c) = empties.random()
             board[r][c] = if (Random.nextInt(10) == 0) 4 else 2
+            newTilePosition = r to c
         }
     }
 
@@ -135,9 +140,11 @@ class GameViewModel : ViewModel() {
         board = Array(size) { IntArray(size) }
         score = 0
         isGameOver = false
+        newTilePosition = null
         addRandomTile()
         addRandomTile()
     }
+
 
 
 }

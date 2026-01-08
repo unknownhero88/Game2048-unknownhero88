@@ -70,7 +70,7 @@ fun GameScreen(vm: GameViewModel = viewModel()) {
         }
 
         Spacer(modifier = Modifier.height(20.dp))
-
+        var lastMoveTime by remember { mutableStateOf(0L) }
         // 🔹 BOARD
         Box(
             modifier = Modifier
@@ -78,8 +78,11 @@ fun GameScreen(vm: GameViewModel = viewModel()) {
                 .aspectRatio(1f)
                 .pointerInput(refresh) {
                     detectDragGestures { change, drag ->
-                        change.consume()
+                        val now = System.currentTimeMillis()
+                        if (now - lastMoveTime < 120) return@detectDragGestures
+                        lastMoveTime = now
 
+                        change.consume()
                         if (abs(drag.x) > abs(drag.y)) {
                             if (drag.x > 0) vm.moveRight() else vm.moveLeft()
                         } else {
@@ -264,28 +267,32 @@ fun Tile(
     )
 
     val popScale = remember { Animatable(0f) }
+    val scale = remember { Animatable(1f) }
+    var hasPopped by remember { mutableStateOf(false) }
 
     LaunchedEffect(isNew) {
-        if (isNew) {
-            popScale.snapTo(0f)
-            popScale.animateTo(
+        if (isNew && !hasPopped) {
+            hasPopped = true
+            scale.snapTo(0.7f) // never 0
+            scale.animateTo(
                 targetValue = 1f,
                 animationSpec = tween(
-                    durationMillis = 200,
+                    durationMillis = 180,
                     easing = FastOutSlowInEasing
                 )
             )
-        } else {
-            popScale.snapTo(1f)
         }
     }
 
     // 💥 MERGE ANIMATION (bounce)
-    val scale = remember { Animatable(1f) }
 
     LaunchedEffect(value) {
         if (value != 0) {
-            scale.snapTo(1.2f)          // thoda bada
+            if (scale.value < 1f) {
+                scale.snapTo(1f)
+            }
+            scale.animateTo(1.2f)
+            scale.animateTo(1f)
             scale.animateTo(
                 targetValue = 1f,      // normal size
                 animationSpec = tween(
