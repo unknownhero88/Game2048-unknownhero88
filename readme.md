@@ -27,6 +27,11 @@ This project focuses on **clean UI**, **smooth animations**, and **beginner-frie
 
 ---
 
+## APK Download
+
+| [Game.apk](https://drive.google.com/drive/folders/130M2bu_y4l6ol38n1ciDKU3PLoYMRWl1?usp=sharing) |
+---
+
 ## 🛠 Tech Stack
 
 - **Language:** Kotlin  
