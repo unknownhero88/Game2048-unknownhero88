@@ -23,7 +23,7 @@ This project focuses on **clean UI**, **smooth animations**, and **beginner-frie
 
 | Gameplay | Game Over |
 |--------|-----------|
-| ![gameplay](Game2048-unknownhero88/app/src/main/res/drawable-ss/gPlay.jpg) | ![gameover](Game2048-unknownhero88/app/src/main/res/drawable-ss/gover.jpg) |
+| ![gameplay](app/src/main/res/drawable-ss/gplay.jpg) | ![gameover](app/src/main/res/drawable-ss/gover.jpg) |
 
 ---
 
