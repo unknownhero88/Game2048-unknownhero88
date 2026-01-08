@@ -4,8 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
@@ -93,20 +96,108 @@ fun GameScreen(vm: GameViewModel = viewModel()) {
         }
     }
 
-    // 🔹 GAME OVER DIALOG
     if (vm.isGameOver) {
-        AlertDialog(
-            onDismissRequest = {},
-            title = { Text("Game Over") },
-            text = { Text("No more moves possible 😢") },
-            confirmButton = {
-                TextButton(onClick = { vm.resetGame() }) {
-                    Text("Restart")
-                }
+        GameOverDialog(
+            score = vm.score,
+            onRestart = {
+                vm.resetGame()
             }
         )
     }
+
 }
+
+@Composable
+fun GameOverDialog(
+    score: Int,
+    onRestart: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.5f)),
+        contentAlignment = Alignment.Center
+    ) {
+
+        Column(
+            modifier = Modifier
+                .padding(24.dp)
+                .background(
+                    color = Color(0xFFF8F5F0),
+                    shape = RoundedCornerShape(24.dp)
+                )
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            // 💀 Emoji
+            Text(
+                text = "😵",
+                fontSize = 48.sp
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // GAME OVER
+            Text(
+                text = "Game Over",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.ExtraBold
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "No more moves available",
+                fontSize = 14.sp,
+                color = Color.Gray
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // SCORE CARD
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Color(0xFFEEE4DA)
+            ) {
+                Column(
+                    modifier = Modifier.padding(
+                        horizontal = 24.dp,
+                        vertical = 12.dp
+                    ),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("Your Score", fontSize = 14.sp)
+                    Text(
+                        text = score.toString(),
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // RESTART BUTTON
+            Button(
+                onClick = onRestart,
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFF2B179)
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Restart Game",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+        }
+    }
+}
+
 
 @Composable
 fun Board(vm: GameViewModel) {
@@ -114,14 +205,20 @@ fun Board(vm: GameViewModel) {
     val tileSize =
         (LocalConfiguration.current.screenWidthDp.dp - 96.dp) / 4
 
+    val boardSize = tileSize * 4f + 24.dp
+
     Box(
-        modifier = Modifier
-            .size(tileSize * 4 + 24.dp)
+        modifier = Modifier.size(boardSize)
     ) {
         vm.board.forEachIndexed { r, row ->
             row.forEachIndexed { c, value ->
                 if (value != 0) {
-                    Tile(value, r, c)
+                    Tile(
+                        value = value,
+                        row = r,
+                        col = c,
+                        isNew = vm.newTilePosition == (r to c)
+                    )
                 }
             }
         }
@@ -133,26 +230,20 @@ fun Board(vm: GameViewModel) {
 fun Tile(
     value: Int,
     row: Int,
-    col: Int
+    col: Int,
+    isNew: Boolean
 ) {
     val tileSize =
         (LocalConfiguration.current.screenWidthDp.dp - 96.dp) / 4
 
-    // 🎯 Target position
-    val targetX = col * (tileSize + 8.dp)
-    val targetY = row * (tileSize + 8.dp)
+    // 🎯 Position (sliding animation already added)
+    val targetX = (tileSize + 8.dp) * col.toFloat()
+    val targetY = (tileSize + 8.dp) * row.toFloat()
 
-    // 🎞 Animate position
-    val offsetX by animateDpAsState(
-        targetValue = targetX,
-        label = "offsetX"
-    )
+    val offsetX by animateDpAsState(targetValue = targetX, label = "offsetX")
+    val offsetY by animateDpAsState(targetValue = targetY, label = "offsetY")
 
-    val offsetY by animateDpAsState(
-        targetValue = targetY,
-        label = "offsetY"
-    )
-
+    // 🎨 Color animation
     val bgColor by animateColorAsState(
         targetValue = when (value) {
             0 -> Color(0xFFCDC1B4)
@@ -162,21 +253,63 @@ fun Tile(
             16 -> Color(0xFFF59563)
             32 -> Color(0xFFF67C5F)
             64 -> Color(0xFFF65E3B)
-            else -> Color(0xFFEDC22E)
+            128 -> Color(0xFFEDCF72)
+            256 -> Color(0xFFEDCC61)
+            512 -> Color(0xFFEDC850)
+            1024 -> Color(0xFFEDC53F)
+            2048 -> Color(0xFFEDC22E)
+            else -> Color.Black
         },
         label = "tileColor"
     )
+
+    val popScale = remember { Animatable(0f) }
+
+    LaunchedEffect(isNew) {
+        if (isNew) {
+            popScale.snapTo(0f)
+            popScale.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(
+                    durationMillis = 200,
+                    easing = FastOutSlowInEasing
+                )
+            )
+        } else {
+            popScale.snapTo(1f)
+        }
+    }
+
+    // 💥 MERGE ANIMATION (bounce)
+    val scale = remember { Animatable(1f) }
+
+    LaunchedEffect(value) {
+        if (value != 0) {
+            scale.snapTo(1.2f)          // thoda bada
+            scale.animateTo(
+                targetValue = 1f,      // normal size
+                animationSpec = tween(
+                    durationMillis = 150,
+                    easing = FastOutSlowInEasing
+                )
+            )
+        }
+    }
 
     Box(
         modifier = Modifier
             .offset(x = offsetX, y = offsetY)
             .size(tileSize)
+            .graphicsLayer {
+                scaleX = popScale.value
+                scaleY = popScale.value
+            }
             .background(bgColor, RoundedCornerShape(14.dp)),
         contentAlignment = Alignment.Center
     ) {
         if (value != 0) {
             Text(
-                value.toString(),
+                text = value.toString(),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = if (value <= 4) Color.DarkGray else Color.White
