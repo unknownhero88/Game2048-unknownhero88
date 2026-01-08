@@ -1,6 +1,7 @@
 package com.example.game2048_unknownhero88
 
 import android.app.Application
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,6 +10,16 @@ import androidx.lifecycle.ViewModel
 import kotlin.random.Random
 
 class GameViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val prefs =
+        getApplication<Application>()
+            .getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
+
+    var highScore by mutableStateOf(
+        prefs.getInt("HIGH_SCORE", 0)
+    )
+        private set
+
 
 
     val size = 4
@@ -60,6 +71,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 if (row[i] == row[i + 1]) {
                     row[i] *= 2
                     score += row[i]
+                    if (score > highScore) {
+                        highScore = score
+                        prefs.edit().putInt("HIGH_SCORE", highScore).apply()
+                    }
                     row.removeAt(i + 1)
                 }
                 i++

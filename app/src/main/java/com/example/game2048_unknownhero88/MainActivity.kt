@@ -66,7 +66,14 @@ fun GameScreen(vm: GameViewModel = viewModel()) {
                 fontSize = 40.sp,
                 fontWeight = FontWeight.ExtraBold
             )
-            ScoreCard(vm.score)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ScoreBox(title = "Score", value = vm.score)
+                ScoreBox(title = "Best", value = vm.highScore)
+            }
+
         }
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -318,18 +325,36 @@ fun Tile(
 }
 
 @Composable
-fun ScoreCard(score: Int) {
+fun ScoreBox(
+    title: String,
+    value: Int
+) {
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = Color(0xFFEEE4DA),
         shadowElevation = 4.dp
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier
+                .width(80.dp)
+                .padding(vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Score", fontSize = 14.sp)
-            Text(score.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(
+                text = title.uppercase(),
+                fontSize = 12.sp,
+                color = Color.DarkGray,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = value.toString(),
+                fontSize = 20.sp,
+                fontWeight = FontWeight.ExtraBold
+            )
         }
     }
 }
+
