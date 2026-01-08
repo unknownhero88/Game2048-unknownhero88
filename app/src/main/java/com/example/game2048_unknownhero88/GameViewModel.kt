@@ -1,5 +1,8 @@
 package com.example.game2048_unknownhero88
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import kotlin.random.Random
 
@@ -62,7 +65,10 @@ class GameViewModel : ViewModel() {
             }
         }
 
-        if (changed) addRandomTile()
+        if (changed) {
+            addRandomTile()
+            isGameOver = checkGameOver()
+        }
     }
 
     fun moveRight() {
@@ -95,4 +101,43 @@ class GameViewModel : ViewModel() {
 
         board = newBoard
     }
+
+    var isGameOver by mutableStateOf(false)
+        private set
+
+    private fun checkGameOver(): Boolean {
+
+
+        for (r in 0 until size) {
+            for (c in 0 until size) {
+                if (board[r][c] == 0) return false
+            }
+        }
+
+
+        for (r in 0 until size) {
+            for (c in 0 until size - 1) {
+                if (board[r][c] == board[r][c + 1]) return false
+            }
+        }
+
+
+        for (c in 0 until size) {
+            for (r in 0 until size - 1) {
+                if (board[r][c] == board[r + 1][c]) return false
+            }
+        }
+
+        return true
+    }
+
+    fun resetGame() {
+        board = Array(size) { IntArray(size) }
+        score = 0
+        isGameOver = false
+        addRandomTile()
+        addRandomTile()
+    }
+
+
 }
