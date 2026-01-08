@@ -266,14 +266,14 @@ fun Tile(
         label = "tileColor"
     )
 
-    val popScale = remember { Animatable(0f) }
     val scale = remember { Animatable(1f) }
     var hasPopped by remember { mutableStateOf(false) }
 
+// 🟢 NEW TILE POP
     LaunchedEffect(isNew) {
         if (isNew && !hasPopped) {
             hasPopped = true
-            scale.snapTo(0.7f) // never 0
+            scale.snapTo(0.7f)   // 👈 kabhi 0 mat rakho
             scale.animateTo(
                 targetValue = 1f,
                 animationSpec = tween(
@@ -284,22 +284,14 @@ fun Tile(
         }
     }
 
-    // 💥 MERGE ANIMATION (bounce)
-
+// 🔵 MERGE BOUNCE
     LaunchedEffect(value) {
-        if (value != 0) {
+        if (!isNew && value != 0) {
             if (scale.value < 1f) {
                 scale.snapTo(1f)
             }
-            scale.animateTo(1.2f)
-            scale.animateTo(1f)
-            scale.animateTo(
-                targetValue = 1f,      // normal size
-                animationSpec = tween(
-                    durationMillis = 150,
-                    easing = FastOutSlowInEasing
-                )
-            )
+            scale.animateTo(1.2f, tween(120))
+            scale.animateTo(1f, tween(120))
         }
     }
 
@@ -308,8 +300,8 @@ fun Tile(
             .offset(x = offsetX, y = offsetY)
             .size(tileSize)
             .graphicsLayer {
-                scaleX = popScale.value
-                scaleY = popScale.value
+                scaleX = scale.value
+                scaleY = scale.value
             }
             .background(bgColor, RoundedCornerShape(14.dp)),
         contentAlignment = Alignment.Center
