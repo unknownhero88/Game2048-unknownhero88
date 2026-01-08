@@ -75,6 +75,21 @@ fun GameScreen(vm: GameViewModel = viewModel()) {
             }
         }
     }
+    if (vm.isGameOver) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Game Over") },
+            text = { Text("No more moves possible 😢") },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.resetGame()
+                }) {
+                    Text("Restart")
+                }
+            }
+        )
+    }
+
 }
 
 @Composable
